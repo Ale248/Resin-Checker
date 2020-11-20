@@ -4,7 +4,7 @@ from threading import Thread
 import time
 
 # time until next resin in seconds (8 minutes)
-NEXT_RESIN = 5
+NEXT_RESIN = 8*60
 
 # max resin number (currently 160)
 MAX_RESIN = 160
@@ -123,11 +123,11 @@ class Window(Frame):
                     hours, mins = divmod(mins, 60)
 
                 timeString = ''
-                timeString += "{0:2d}".format(hours)
+                timeString += "{:02d}".format(hours)
                 timeString += ':'
-                timeString += "{0:2d}".format(mins)
+                timeString += "{:02d}".format(mins)
                 timeString += ':'
-                timeString += "{0:2d}".format(secs)
+                timeString += "{:02d}".format(secs)
                 self.fullResinString.set(timeString)
 
                 self.master.update()
@@ -155,11 +155,11 @@ class Window(Frame):
                     hours, mins = divmod(mins, 60)
 
                 timeString = ''
-                timeString += "{0:2d}".format(hours)
+                timeString += "{:02d}".format(hours)
                 timeString += ':'
-                timeString += "{0:2d}".format(mins)
+                timeString += "{:02d}".format(mins)
                 timeString += ':'
-                timeString += "{0:2d}".format(secs)
+                timeString += "{:02d}".format(secs)
                 self.nextResinString.set(timeString)
 
                 print(timeString)
