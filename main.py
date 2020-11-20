@@ -4,7 +4,7 @@ from threading import Thread
 import time
 
 # time until next resin in seconds (8 minutes)
-NEXT_RESIN = 8*60
+NEXT_RESIN_TIME = 5
 
 # max resin number (currently 160)
 MAX_RESIN = 160
@@ -14,22 +14,27 @@ class Window(Frame):
         self.master = master
         self.master.title('Resin Checker')
 
+        # Resin times
+        self.nextResinTime = 0
+        self.fullResinTime = 0
+
         # Variables
         self.resinString = StringVar()
         self.nextResinString = StringVar()
         self.fullResinString = StringVar()
+        self.resinNum = 150
 
         # Set default values to variables
-        self.resinString.set('150')
-        self.nextResinString.set('00')
-        self.fullResinString.set('00')
+        self.resinString.set(str(self.resinNum))
+        self.nextResinString.set(str(self.nextResinTime))
+        self.fullResinString.set(str(self.fullResinTime))
 
         # Resin entry
         # self.resinEntry = Entry(master, textvariable=self.resinString)
         # self.resinEntry.grid(row=0, column=0)
-
+        self.up_or_down_func = self.master.register(self.up_or_down)
         self.resinSpinbox = Spinbox(master, from_=0, to=MAX_RESIN, state='readonly',
-            repeatdelay=500, repeatinterval=50, textvariable=self.resinString)
+            repeatdelay=500, repeatinterval=50, textvariable=self.resinString, command=(self.up_or_down_func, '%d'))
         self.resinSpinbox.grid(row=0, column=0)
 
         # Resin label (right of entry)
@@ -76,11 +81,28 @@ class Window(Frame):
         self.fullResin_thread = Thread(target=self.fullResinCountdown, daemon=True)
         self.fullResin_thread.start()
 
+    def updateTime(self):
+        print(self.resinString.get())
 
-        # self.master.protocol("WM_DELETE_WINDOW", self.on_close)
+    def up_or_down(self, direction):
+        # print(self.resinString.get())
+        # print(direction)
+        oldResin = self.resinNum
+        newResin = 0
+
+        if (direction == 'up'):
+            print('resin up')
+            self.fullResinTime -= NEXT_RESIN_TIME
+            newResin = oldResin + 1
+        else:
+            print('resin down')
+            self.fullResinTime += NEXT_RESIN_TIME
+            newResin = oldResin - 1
+
+        self.resinNum = newResin
 
     def useResin(self, resin):
-        currentResin = int(self.resinSpinbox.get())
+        currentResin = int(self.resinString.get())
         newResin = currentResin - resin
         if newResin < 0:
             newResin = 0
@@ -88,35 +110,32 @@ class Window(Frame):
         if newResin >= MAX_RESIN:
             newResin = MAX_RESIN
         self.resinString.set(str(newResin))
+        self.fullResinTime += NEXT_RESIN_TIME*resin
 
     def startCountdown(self):
         # while True:
         #     currentResin = int(self.resinSpinbox.get())
         #     resinUntilFull = MAX_RESIN - currentResin
         #
-        #     timeUntilNext = NEXT_RESIN
-        #     timeUntilFull = (MAX_RESIN - currentResin) * NEXT_RESIN
+        #     timeUntilNext = NEXT_RESIN_TIME
+        #     timeUntilFull = (MAX_RESIN - currentResin) * NEXT_RESIN_TIME
         #
         #     if currentResin >= MAX_RESIN:
         #         break
         #
-        #     while timeUntilFull > -1:
+        #     while timeUntilFull > -1:timeString = ''
         return 0
 
     def fullResinCountdown(self):
         while True:
-            currentResin = int(self.resinSpinbox.get())
-            timeUntilFull = (MAX_RESIN - currentResin) * NEXT_RESIN
+            currentResin = int(self.resinString.get())
+            self.fullResinTime = (MAX_RESIN - currentResin) * NEXT_RESIN_TIME
 
             if currentResin >= MAX_RESIN:
-                break
+                continue
 
-            while timeUntilFull > -1:
-                newResin = int(self.resinSpinbox.get()) - currentResin
-                if newResin != 0:
-                    break
-
-                mins, secs = divmod(timeUntilFull, 60)
+            while self.fullResinTime > -1:
+                mins, secs = divmod(self.fullResinTime, 60)
 
                 hours = 0
                 if mins > 60:
@@ -133,21 +152,23 @@ class Window(Frame):
                 self.master.update()
                 time.sleep(1)
 
-                if (timeUntilFull == 0) or int(self.resinSpinbox.get()) == MAX_RESIN:
+                if (self.fullResinTime == 0) or (int(self.resinString.get()) == MAX_RESIN):
                     messagebox.showinfo('Resin Checker', 'Resin is full!')
+                    break
 
-                timeUntilFull -= 1
+                self.fullResinTime -= 1
 
     def nextResinCountdown(self):
         while True:
-            timeRemaining = NEXT_RESIN
+            timeRemaining = NEXT_RESIN_TIME
             # currentResin = int(self.resinString.get())
-            currentResin = int(self.resinSpinbox.get())
+            currentResin = int(self.resinString.get())
 
             if currentResin >= MAX_RESIN:
                 break
 
             while timeRemaining > -1:
+                currentResin = int(self.resinString.get())
                 mins, secs = divmod(timeRemaining, 60)
 
                 hours = 0
@@ -162,20 +183,18 @@ class Window(Frame):
                 timeString += "{:02d}".format(secs)
                 self.nextResinString.set(timeString)
 
-                print(timeString)
                 # currentResin = int(self.resinString.get())
 
                 self.master.update()
                 time.sleep(1)
 
-
-                if int(self.resinSpinbox.get()) == MAX_RESIN:
+                if int(self.resinString.get()) == MAX_RESIN:
                     break
 
-                if (timeRemaining == 0):
+                if (timeRemaining == 1):
                     currentResin += 1
-                    # self.resinString.set(str(currentResin))
-                    self.resinSpinbox.invoke('buttonup')
+                    self.resinString.set(str(currentResin))
+                    # self.resinSpinbox.invoke('buttonup')
                     break
 
                 timeRemaining -= 1
