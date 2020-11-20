@@ -101,16 +101,19 @@ class Window(Frame):
 
         self.resinNum = newResin
 
+    # TODO: when resin reach 0, if use resin is pushed, dont keep adding time
     def useResin(self, resin):
-        currentResin = int(self.resinString.get())
+        currentResin = self.resinNum
         newResin = currentResin - resin
         if newResin < 0:
             newResin = 0
-
         if newResin >= MAX_RESIN:
             newResin = MAX_RESIN
-        self.resinString.set(str(newResin))
+
         self.fullResinTime += NEXT_RESIN_TIME*resin
+        self.resinNum = newResin
+        self.resinString.set(str(self.resinNum))
+
 
     def startCountdown(self):
         # while True:
@@ -162,13 +165,13 @@ class Window(Frame):
         while True:
             timeRemaining = NEXT_RESIN_TIME
             # currentResin = int(self.resinString.get())
-            currentResin = int(self.resinString.get())
+            currentResin = self.resinNum
 
             if currentResin >= MAX_RESIN:
-                break
+                continue
 
             while timeRemaining > -1:
-                currentResin = int(self.resinString.get())
+                currentResin = self.resinNum
                 mins, secs = divmod(timeRemaining, 60)
 
                 hours = 0
@@ -188,12 +191,12 @@ class Window(Frame):
                 self.master.update()
                 time.sleep(1)
 
-                if int(self.resinString.get()) == MAX_RESIN:
+                if self.resinNum == MAX_RESIN:
                     break
 
                 if (timeRemaining == 1):
-                    currentResin += 1
-                    self.resinString.set(str(currentResin))
+                    self.resinNum += 1
+                    self.resinString.set(str(self.resinNum))
                     # self.resinSpinbox.invoke('buttonup')
                     break
 
