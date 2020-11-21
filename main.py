@@ -1,5 +1,6 @@
 from tkinter import *
 from tkinter import messagebox
+from tkinter.font import Font
 from threading import Thread
 import time
 
@@ -13,7 +14,10 @@ MAX_RESIN = 160
 MAX_RESIN_TIME = MAX_RESIN * NEXT_RESIN_TIME
 
 class Window(Frame):
+
     def __init__(self, master):
+        self.BIG_FONT = Font(family='Helvetica', size=24)
+
         self.master = master
         self.master.title('Resin Checker')
 
@@ -37,44 +41,45 @@ class Window(Frame):
         # self.resinEntry.grid(row=0, column=0)
         self.up_or_down_func = self.master.register(self.up_or_down)
         self.resinSpinbox = Spinbox(master, from_=0, to=MAX_RESIN, state='readonly',
-            repeatdelay=500, repeatinterval=50, textvariable=self.resinString, command=(self.up_or_down_func, '%d'))
+            repeatdelay=500, repeatinterval=50, textvariable=self.resinString, command=(self.up_or_down_func, '%d'),
+            font=self.BIG_FONT)
         self.resinSpinbox.grid(row=0, column=0)
 
         # Resin label (right of entry)
-        self.resinLabel = Label(master, text='/160')
+        self.resinLabel = Label(master, text='/160', font=self.BIG_FONT)
         self.resinLabel.grid(row=0, column=1)
 
         # -20 resin button
-        self.useTwentyButton = Button(master, text='-20', command=lambda: self.useResin(20))
+        self.useTwentyButton = Button(master, text='-20', command=lambda: self.useResin(20), font=self.BIG_FONT)
         self.useTwentyButton.grid(row=0, column=2)
 
         # -40 resin button
-        self.useFortyButton = Button(master, text='-40', command=lambda: self.useResin(40))
+        self.useFortyButton = Button(master, text='-40', command=lambda: self.useResin(40), font=self.BIG_FONT)
         self.useFortyButton.grid(row=0, column=3)
 
         # -60 resin button
-        self.useSixtyButton = Button(master, text='-60', command=lambda: self.useResin(60))
+        self.useSixtyButton = Button(master, text='-60', command=lambda: self.useResin(60), font=self.BIG_FONT)
         self.useSixtyButton.grid(row=0, column=4)
 
         # +60 resin button
-        self.getSixtyButton = Button(master, text='+60', command=lambda: self.useResin(-60))
+        self.getSixtyButton = Button(master, text='+60', command=lambda: self.useResin(-60), font=self.BIG_FONT)
         self.getSixtyButton.grid(row=0, column=5)
 
         # 'Next resin' label
-        self.nextResinLabel = Label(master, text='Next resin in: ')
-        self.nextResinLabel.grid(row=1, column=0)
+        self.nextResinLabel = Label(master, text='Next resin in: ', font=self.BIG_FONT)
+        self.nextResinLabel.grid(row=1, column=0, columnspan=6)
 
         # Next resin entry
-        self.nextResinEntry = Entry(master, textvariable=self.nextResinString)
-        self.nextResinEntry.grid(row=2, column=0)
+        self.nextResinEntry = Entry(master, textvariable=self.nextResinString, font=self.BIG_FONT)
+        self.nextResinEntry.grid(row=2, column=0, columnspan=6)
 
         # 'Full resin' label
-        self.fullResinLabel = Label(master, text='Full resin in: ')
-        self.fullResinLabel.grid(row=3, column=0)
+        self.fullResinLabel = Label(master, text='Full resin in: ', font=self.BIG_FONT)
+        self.fullResinLabel.grid(row=3, column=0, columnspan=6)
 
         # Full resin entry
-        self.fullResinEntry = Entry(master, textvariable=self.fullResinString)
-        self.fullResinEntry.grid(row=4, column=0)
+        self.fullResinEntry = Entry(master, textvariable=self.fullResinString, font=self.BIG_FONT)
+        self.fullResinEntry.grid(row=4, column=0, columnspan=6)
 
         # self.nextResinCountdown()
         # daemon=True means, when the main thread (window) dies, also terminate the thread
@@ -219,8 +224,8 @@ class Window(Frame):
 if __name__ == '__main__':
     window = Tk()
 
-    windowWidth = 282
-    windowHeight = 256
+    windowWidth = 800
+    windowHeight = 600
 
     # display window in center of screen
     # -------------
