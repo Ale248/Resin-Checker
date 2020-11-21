@@ -9,6 +9,9 @@ NEXT_RESIN_TIME = 5
 # max resin number (currently 160)
 MAX_RESIN = 160
 
+# max resin time (max resin is 160, and each resin takes 8 minutes)
+MAX_RESIN_TIME = MAX_RESIN * NEXT_RESIN_TIME
+
 class Window(Frame):
     def __init__(self, master):
         self.master = master
@@ -101,7 +104,6 @@ class Window(Frame):
 
         self.resinNum = newResin
 
-    # TODO: when resin reach 0, if use resin is pushed, dont keep adding time
     def useResin(self, resin):
         currentResin = self.resinNum
         newResin = currentResin - resin
@@ -111,6 +113,9 @@ class Window(Frame):
             newResin = MAX_RESIN
 
         self.fullResinTime += NEXT_RESIN_TIME*resin
+        if self.fullResinTime >= MAX_RESIN_TIME:
+            self.fullResinTime = MAX_RESIN_TIME
+
         self.resinNum = newResin
         self.resinString.set(str(self.resinNum))
 
