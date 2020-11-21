@@ -84,6 +84,14 @@ class Window(Frame):
         self.fullResin_thread = Thread(target=self.fullResinCountdown, daemon=True)
         self.fullResin_thread.start()
 
+        # self.testThread = Thread(target=self.printSize, daemon=True)
+        # self.testThread.start()
+
+    # def printSize(self):
+    #     while True:
+    #         print('Width: {}, Height: {}'.format(self.master.winfo_width(), self.master.winfo_height()))
+    #         time.sleep(1)
+
     def updateTime(self):
         print(self.resinString.get())
 
@@ -211,8 +219,8 @@ class Window(Frame):
 if __name__ == '__main__':
     window = Tk()
 
-    windowWidth = 800
-    windowHeight = 600
+    windowWidth = 282
+    windowHeight = 256
 
     # display window in center of screen
     # -------------
