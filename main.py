@@ -2,6 +2,8 @@ from tkinter import *
 from tkinter import messagebox
 from tkinter.font import Font
 from threading import Thread
+import os
+import shelve
 import time
 
 # time until next resin in seconds (8 minutes)
@@ -16,6 +18,13 @@ MAX_RESIN_TIME = MAX_RESIN * NEXT_RESIN_TIME
 class Window(Frame):
 
     def __init__(self, master):
+        # change working directory to this directory
+        os.chdir(os.path.dirname(sys.argv[0]))
+
+        # open file with shelve to retrieve data (if exists)
+        self.dataFile = shelve.open('Resin_Data')
+
+
         self.BIG_FONT = Font(family='Helvetica', size=24)
 
         self.master = master
@@ -29,7 +38,11 @@ class Window(Frame):
         self.resinString = StringVar()
         self.nextResinString = StringVar()
         self.fullResinString = StringVar()
-        self.resinNum = 150
+        self.resinNum = 0
+
+        if 'lastResin' in list(self.dataFile.keys()):
+            self.resinNum = self.dataFile['lastResin']
+
 
         # Set default values to variables
         self.resinString.set(str(self.resinNum))
@@ -89,6 +102,8 @@ class Window(Frame):
         self.fullResin_thread = Thread(target=self.fullResinCountdown, daemon=True)
         self.fullResin_thread.start()
 
+        self.master.protocol('WM_DELETE_WINDOW', self.on_closing)
+
         # self.testThread = Thread(target=self.printSize, daemon=True)
         # self.testThread.start()
 
@@ -96,6 +111,11 @@ class Window(Frame):
     #     while True:
     #         print('Width: {}, Height: {}'.format(self.master.winfo_width(), self.master.winfo_height()))
     #         time.sleep(1)
+
+    def on_closing(self):
+        self.dataFile['lastResin'] = self.resinNum
+        self.dataFile.close()
+        self.master.destroy()
 
     def updateTime(self):
         print(self.resinString.get())
