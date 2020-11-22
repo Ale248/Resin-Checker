@@ -5,6 +5,7 @@ from threading import Thread
 import os
 import shelve
 import time
+import datetime
 
 # time until next resin in seconds (8 minutes)
 NEXT_RESIN_TIME = 5
@@ -23,7 +24,8 @@ class Window(Frame):
 
         # open file with shelve to retrieve data (if exists)
         self.dataFile = shelve.open('Resin_Data')
-
+        if 'lastTime' in list(self.dataFile.keys()):
+            print(self.dataFile['lastTime'])
 
         self.BIG_FONT = Font(family='Helvetica', size=24)
 
@@ -40,9 +42,11 @@ class Window(Frame):
         self.fullResinString = StringVar()
         self.resinNum = 0
 
-        if 'lastResin' in list(self.dataFile.keys()):
-            self.resinNum = self.dataFile['lastResin']
+        # self.updateResin()
+        # if 'lastResin' in list(self.dataFile.keys()):
+        #     self.resinNum = self.dataFile['lastResin']
 
+        self.updateResin()
 
         # Set default values to variables
         self.resinString.set(str(self.resinNum))
@@ -112,8 +116,38 @@ class Window(Frame):
     #         print('Width: {}, Height: {}'.format(self.master.winfo_width(), self.master.winfo_height()))
     #         time.sleep(1)
 
+    # Calculate how much resin now after last closed
+    # "%Y-%m-%d %H:%M:%S"
+    def updateResin(self):
+        if all(key in list(self.dataFile.keys()) for key in ['lastResin', 'lastTime']):
+            currentTime = datetime.datetime.now().replace(microsecond=0)
+            lastTime = self.dataFile['lastTime']
+            lastResin = self.dataFile['lastResin']
+            print('lastTime: {}'.format(lastTime))
+            print('currentTime: {}'.format(currentTime))
+            print('lastResin: {}'.format(lastResin))
+
+            timeDelta = currentTime - lastTime
+
+            secondsDiff = 0
+            # convert days to seconds
+            secondsDiff += timeDelta.days * 86400
+            secondsDiff += timeDelta.seconds
+
+            # resin gain in those time
+            resinGain = int(secondsDiff / NEXT_RESIN_TIME)
+
+            # update the resin
+            self.resinNum = lastResin + resinGain
+
+            if self.resinNum >= MAX_RESIN:
+                self.resinNum = MAX_RESIN
+
     def on_closing(self):
         self.dataFile['lastResin'] = self.resinNum
+        # "%Y-%m-%d %H:%M:%S"
+        # ignore microseconds
+        self.dataFile['lastTime'] = datetime.datetime.now().replace(microsecond=0)
         self.dataFile.close()
         self.master.destroy()
 
