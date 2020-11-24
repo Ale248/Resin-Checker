@@ -8,7 +8,7 @@ import time
 import datetime
 
 # Time until next resin in seconds (8 minutes)
-NEXT_RESIN_TIME = 8*60
+NEXT_RESIN_TIME = 5
 
 # Max resin number (currently 160)
 MAX_RESIN = 160
@@ -139,6 +139,7 @@ class Window(Frame):
         self.dataFile['lastTime'] = datetime.datetime.now().replace(microsecond=0)
         self.dataFile['lastNextRemaining'] = self.nextResinTime
         self.dataFile['lastFullRemaining'] = self.fullResinTime
+
         self.dataFile.close()
         self.master.destroy()
 
@@ -206,12 +207,7 @@ class Window(Frame):
                 if mins > 60:
                     hours, mins = divmod(mins, 60)
 
-                timeString = ''
-                timeString += "{:02d}".format(hours)
-                timeString += ':'
-                timeString += "{:02d}".format(mins)
-                timeString += ':'
-                timeString += "{:02d}".format(secs)
+                timeString = '{:02d}:{:02d}:{:02d}'.format(hours, mins, secs)
                 self.fullResinString.set(timeString)
 
                 self.master.update()
@@ -230,29 +226,23 @@ class Window(Frame):
         """
         firstRun = True
         while True:
-            timeRemaining = NEXT_RESIN_TIME - self.secondsPassed
-            if 'lastNextRemaining' in list(self.dataFile.keys()) and firstRun:
-                timeRemaining = self.dataFile['lastNextRemaining'] - self.secondsPassed
-            self.nextResinTime = timeRemaining
-            currentResin = self.resinNum
+            self.nextResinTime = NEXT_RESIN_TIME
+            if firstRun:
+                self.nextResinTime = NEXT_RESIN_TIME - self.secondsPassed
+                if 'lastNextRemaining' in list(self.dataFile.keys()):
+                    self.nextResinTime = self.dataFile['lastNextRemaining'] - self.secondsPassed
 
-            if currentResin >= MAX_RESIN:
+            if self.resinNum >= MAX_RESIN:
                 continue
 
-            while timeRemaining > -1:
-                currentResin = self.resinNum
-                mins, secs = divmod(timeRemaining, 60)
+            while self.nextResinTime > -1:
+                mins, secs = divmod(self.nextResinTime, 60)
 
                 hours = 0
                 if mins > 60:
                     hours, mins = divmod(mins, 60)
 
-                timeString = ''
-                timeString += "{:02d}".format(hours)
-                timeString += ':'
-                timeString += "{:02d}".format(mins)
-                timeString += ':'
-                timeString += "{:02d}".format(secs)
+                timeString = '{:02d}:{:02d}:{:02d}'.format(hours, mins, secs)
                 self.nextResinString.set(timeString)
 
                 self.master.update()
@@ -261,15 +251,14 @@ class Window(Frame):
                 if self.resinNum == MAX_RESIN:
                     break
 
-                if (timeRemaining == 1):
+                if (self.nextResinTime == 0):
                     self.resinNum += 1
                     self.resinString.set(str(self.resinNum))
-                    firstRun = False
                     break
 
-                timeRemaining -= 1
-                self.nextResinTime = timeRemaining
+                self.nextResinTime -= 1
 
+            firstRun = False
 
 if __name__ == '__main__':
     window = Tk()
