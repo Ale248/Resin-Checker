@@ -191,13 +191,13 @@ class Window(Frame):
         """
         firstRun = True
         while True:
-            currentResin = int(self.resinString.get())
-            self.fullResinTime = (MAX_RESIN - currentResin) * NEXT_RESIN_TIME
-            if 'lastFullRemaining' in list(self.dataFile.keys()) and firstRun:
-                self.fullResinTime = self.dataFile['lastFullRemaining']
-            self.fullResinTime -= self.secondsPassed
+            self.fullResinTime = (MAX_RESIN - self.resinNum) * NEXT_RESIN_TIME
+            if firstRun:
+                self.fullResinTime = ((MAX_RESIN - self.resinNum) * NEXT_RESIN_TIME) - self.secondsPassed
+                if 'lastFullRemaining' in list(self.dataFile.keys()):
+                    self.fullResinTime = self.dataFile['lastFullRemaining'] - self.secondsPassed
 
-            if currentResin >= MAX_RESIN:
+            if self.resinNum >= MAX_RESIN:
                 continue
 
             while self.fullResinTime > -1:
@@ -213,12 +213,13 @@ class Window(Frame):
                 self.master.update()
                 time.sleep(1)
 
-                if (self.fullResinTime == 0) or (int(self.resinString.get()) == MAX_RESIN):
+                if (self.fullResinTime == 0) or (self.resinNum >= MAX_RESIN):
                     messagebox.showinfo('Resin Checker', 'Resin is full!')
-                    firstRun = False
                     break
 
                 self.fullResinTime -= 1
+
+            firstRun = False
 
 
     def nextResinCountdown(self):
