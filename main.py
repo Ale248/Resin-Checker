@@ -7,27 +7,25 @@ import shelve
 import time
 import datetime
 
-# time until next resin in seconds (8 minutes)
+# Time until next resin in seconds (8 minutes)
 NEXT_RESIN_TIME = 8*60
 
-# max resin number (currently 160)
+# Max resin number (currently 160)
 MAX_RESIN = 160
 
-# max resin time (max resin is 160, and each resin takes 8 minutes)
+# Max resin time (max resin is 160, and each resin takes 8 minutes)
 MAX_RESIN_TIME = MAX_RESIN * NEXT_RESIN_TIME
 
 class Window(Frame):
-
+    # Constructor
     def __init__(self, master):
-        # change working directory to this directory
+        """Class constructor.
+        """
+        # Change working directory to this directory
         os.chdir(os.path.dirname(sys.argv[0]))
 
-        self.secondsRemaining = 0
-
-        # open file with shelve to retrieve data (if exists)
+        # Open file with shelve to retrieve data (if exists)
         self.dataFile = shelve.open('Resin_Data')
-        if 'lastTime' in list(self.dataFile.keys()):
-            print(self.dataFile['lastTime'])
 
         self.BIG_FONT = Font(family='Helvetica', size=24)
 
@@ -39,20 +37,21 @@ class Window(Frame):
         self.fullResinTime = 0
 
         # Variables
-        self.resinString = StringVar()
-        self.nextResinString = StringVar()
-        self.fullResinString = StringVar()
-        self.resinNum = 0
+        self.resinString = StringVar()              # string for resin text
+        self.nextResinString = StringVar()          # string for countdown to next resin
+        self.fullResinString = StringVar()          # string for countdown to full resin
+        self.resinNum = 0                           # initialize resin number
+        self.secondsPassed = 0                      # initialize seconds passed
 
         # Update resin with according to time passed
-        self.updateResin()
+        self.updateData()
 
-        # Set default values to variables
+        # Set default values to the respective strings
         self.resinString.set(str(self.resinNum))
         self.nextResinString.set(str(self.nextResinTime))
         self.fullResinString.set(str(self.fullResinTime))
 
-        # Resin entry
+        # Resin Spinbox
         self.up_or_down_func = self.master.register(self.up_or_down)
         self.resinSpinbox = Spinbox(master, from_=0, to=MAX_RESIN, state='readonly',
             repeatdelay=500, repeatinterval=50, textvariable=self.resinString, command=(self.up_or_down_func, '%d'),
@@ -95,42 +94,45 @@ class Window(Frame):
         self.fullResinEntry = Entry(master, textvariable=self.fullResinString, font=self.BIG_FONT)
         self.fullResinEntry.grid(row=4, column=0, columnspan=6)
 
-        # self.nextResinCountdown()
+        # Start a thread for next resin countdown
         # daemon=True means, when the main thread (window) dies, also terminate the thread
         self.nextResin_thread = Thread(target=self.nextResinCountdown, daemon=True)
         self.nextResin_thread.start()
 
+        # Start a thread for full resin countdown
         self.fullResin_thread = Thread(target=self.fullResinCountdown, daemon=True)
         self.fullResin_thread.start()
 
+        # Run self.onclosing() when application is closed
         self.master.protocol('WM_DELETE_WINDOW', self.on_closing)
 
     # Calculate how much resin now after last closed
-    # "%Y-%m-%d %H:%M:%S"
-    def updateResin(self):
+    def updateData(self):
+        """Updates resin and how much time has passed in seconds using Resin_Data files.
+        """
         if all(key in list(self.dataFile.keys()) for key in ['lastResin', 'lastTime']):
             currentTime = datetime.datetime.now().replace(microsecond=0)
             lastTime = self.dataFile['lastTime']
             lastResin = self.dataFile['lastResin']
-            print('lastTime: {}'.format(lastTime))
-            print('currentTime: {}'.format(currentTime))
-            print('lastResin: {}'.format(lastResin))
 
+            # Calculates how much time has passed
             timeDelta = currentTime - lastTime
 
+            # Converts timeDelta to seconds
             secondsPassed = 0
-            # convert days to seconds
             secondsPassed += timeDelta.days * 86400
             secondsPassed += timeDelta.seconds
 
-            resinGain, self.secondsRemaining = divmod(secondsPassed, NEXT_RESIN_TIME)
+            # Calculates how much resin gained and how many seconds need to be deducted
+            # from current countdown
+            resinGain, self.secondsPassed = divmod(secondsPassed, NEXT_RESIN_TIME)
 
-            # update resin
+            # Update resin
             self.resinNum = lastResin + resinGain
 
-
-    # save necessary data upon closing the application
     def on_closing(self):
+        """Updates Resin_Data files upon closing.
+        """
         self.dataFile['lastResin'] = self.resinNum
         # "%Y-%m-%d %H:%M:%S"
         # ignore microseconds
@@ -140,25 +142,30 @@ class Window(Frame):
         self.dataFile.close()
         self.master.destroy()
 
-    def updateTime(self):
-        print(self.resinString.get())
-
     def up_or_down(self, direction):
+        """Updates current variables according to which button is pressed on the Spinbox.
+
+        Keyword arguments:
+        direction -- the direction of Spinbox button pushed ('up' or 'down')
+        """
         oldResin = self.resinNum
         newResin = 0
 
         if (direction == 'up'):
-            print('resin up')
             self.fullResinTime -= NEXT_RESIN_TIME
             newResin = oldResin + 1
         else:
-            print('resin down')
             self.fullResinTime += NEXT_RESIN_TIME
             newResin = oldResin - 1
 
         self.resinNum = newResin
 
     def useResin(self, resin):
+        """Update the resin and countdown according to how much resin is used.
+
+        Keyword arguments:
+        resin -- the amount of resin used
+        """
         currentResin = self.resinNum
         newResin = currentResin - resin
         if newResin < 0:
@@ -167,7 +174,8 @@ class Window(Frame):
             newResin = MAX_RESIN
 
         self.fullResinTime += NEXT_RESIN_TIME * resin
-        # if resin is at 0, take into account the current 'next resin time'
+
+        # Set the upper bound for full resin countdown
         if self.fullResinTime >= MAX_RESIN_TIME:
             self.fullResinTime = (MAX_RESIN_TIME - NEXT_RESIN_TIME) + self.nextResinTime
 
@@ -175,13 +183,15 @@ class Window(Frame):
         self.resinString.set(str(self.resinNum))
 
     def fullResinCountdown(self):
+        """Starts the countdown for full resin.
+        """
         firstRun = True
         while True:
             currentResin = int(self.resinString.get())
             self.fullResinTime = (MAX_RESIN - currentResin) * NEXT_RESIN_TIME
             if 'lastFullRemaining' in list(self.dataFile.keys()) and firstRun:
                 self.fullResinTime = self.dataFile['lastFullRemaining']
-            self.fullResinTime -= self.secondsRemaining
+            self.fullResinTime -= self.secondsPassed
 
             if currentResin >= MAX_RESIN:
                 continue
@@ -212,11 +222,13 @@ class Window(Frame):
                 self.fullResinTime -= 1
 
     def nextResinCountdown(self):
+        """Starts the countdown for next resin.
+        """
         firstRun = True
         while True:
-            timeRemaining = NEXT_RESIN_TIME - self.secondsRemaining
+            timeRemaining = NEXT_RESIN_TIME - self.secondsPassed
             if 'lastNextRemaining' in list(self.dataFile.keys()) and firstRun:
-                timeRemaining = self.dataFile['lastNextRemaining'] - self.secondsRemaining
+                timeRemaining = self.dataFile['lastNextRemaining'] - self.secondsPassed
             self.nextResinTime = timeRemaining
             currentResin = self.resinNum
 
@@ -261,7 +273,7 @@ if __name__ == '__main__':
     windowWidth = 800
     windowHeight = 600
 
-    # display window in center of screen
+    # Display window in center of screen
     # -------------
     screenWidth = window.winfo_screenwidth()
     screenHeight = window.winfo_screenheight()
