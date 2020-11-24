@@ -41,6 +41,7 @@ class Window(Frame):
         self.fullResinString = StringVar()          # string for countdown to full resin
         self.resinNum = 0                           # initialize resin number
         self.secondsPassed = 0                      # initialize seconds passed
+        self.timePassed = 0
 
         # Update resin with according to time passed
         self.updateData()
@@ -113,6 +114,8 @@ class Window(Frame):
             currentTime = datetime.datetime.now().replace(microsecond=0)
             lastTime = self.dataFile['lastTime']
             lastResin = self.dataFile['lastResin']
+            print('Last closed: ' + str(lastTime))
+            print('Current time: ' + str(currentTime))
 
             # Calculates how much time has passed
             timeDelta = currentTime - lastTime
@@ -121,6 +124,7 @@ class Window(Frame):
             secondsPassed = 0
             secondsPassed += timeDelta.days * 86400
             secondsPassed += timeDelta.seconds
+            self.timePassed = secondsPassed
 
             # Calculates how much resin gained and how many seconds need to be deducted
             # from current countdown
@@ -193,9 +197,12 @@ class Window(Frame):
         while True:
             self.fullResinTime = (MAX_RESIN - self.resinNum) * NEXT_RESIN_TIME
             if firstRun:
-                self.fullResinTime = ((MAX_RESIN - self.resinNum) * NEXT_RESIN_TIME) - self.secondsPassed
+                self.fullResinTime = ((MAX_RESIN - self.resinNum) * NEXT_RESIN_TIME) - self.timePassed
                 if 'lastFullRemaining' in list(self.dataFile.keys()):
-                    self.fullResinTime = self.dataFile['lastFullRemaining'] - self.secondsPassed
+                    print('Hello')
+                    print(str(self.timePassed))
+                    print(str(self.dataFile['lastFullRemaining']))
+                    self.fullResinTime = self.dataFile['lastFullRemaining'] - self.timePassed
 
             if self.resinNum >= MAX_RESIN:
                 continue
