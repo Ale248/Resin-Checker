@@ -17,7 +17,6 @@ MAX_RESIN = 160
 MAX_RESIN_TIME = MAX_RESIN * NEXT_RESIN_TIME
 
 class Window(Frame):
-    # Constructor
     def __init__(self, master):
         """Class constructor.
         """
@@ -106,7 +105,7 @@ class Window(Frame):
         # Run self.onclosing() when application is closed
         self.master.protocol('WM_DELETE_WINDOW', self.on_closing)
 
-    # Calculate how much resin now after last closed
+
     def updateData(self):
         """Updates resin and how much time has passed in seconds using Resin_Data files.
         """
@@ -130,17 +129,19 @@ class Window(Frame):
             # Update resin
             self.resinNum = lastResin + resinGain
 
+
     def on_closing(self):
         """Updates Resin_Data files upon closing.
         """
         self.dataFile['lastResin'] = self.resinNum
-        # "%Y-%m-%d %H:%M:%S"
-        # ignore microseconds
+
+        # Ignore microseconds
         self.dataFile['lastTime'] = datetime.datetime.now().replace(microsecond=0)
         self.dataFile['lastNextRemaining'] = self.nextResinTime
         self.dataFile['lastFullRemaining'] = self.fullResinTime
         self.dataFile.close()
         self.master.destroy()
+
 
     def up_or_down(self, direction):
         """Updates current variables according to which button is pressed on the Spinbox.
@@ -159,6 +160,7 @@ class Window(Frame):
             newResin = oldResin - 1
 
         self.resinNum = newResin
+
 
     def useResin(self, resin):
         """Update the resin and countdown according to how much resin is used.
@@ -181,6 +183,7 @@ class Window(Frame):
 
         self.resinNum = newResin
         self.resinString.set(str(self.resinNum))
+
 
     def fullResinCountdown(self):
         """Starts the countdown for full resin.
@@ -220,6 +223,7 @@ class Window(Frame):
                     break
 
                 self.fullResinTime -= 1
+
 
     def nextResinCountdown(self):
         """Starts the countdown for next resin.
