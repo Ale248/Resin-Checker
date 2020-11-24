@@ -8,7 +8,7 @@ import time
 import datetime
 
 # time until next resin in seconds (8 minutes)
-NEXT_RESIN_TIME = 5
+NEXT_RESIN_TIME = 8*60
 
 # max resin number (currently 160)
 MAX_RESIN = 160
@@ -21,6 +21,8 @@ class Window(Frame):
     def __init__(self, master):
         # change working directory to this directory
         os.chdir(os.path.dirname(sys.argv[0]))
+
+        self.secondsRemaining = 0
 
         # open file with shelve to retrieve data (if exists)
         self.dataFile = shelve.open('Resin_Data')
@@ -116,25 +118,25 @@ class Window(Frame):
 
             timeDelta = currentTime - lastTime
 
-            secondsDiff = 0
+            secondsPassed = 0
             # convert days to seconds
-            secondsDiff += timeDelta.days * 86400
-            secondsDiff += timeDelta.seconds
+            secondsPassed += timeDelta.days * 86400
+            secondsPassed += timeDelta.seconds
 
-            # resin gain in those time
-            resinGain = int(secondsDiff / NEXT_RESIN_TIME)
+            resinGain, self.secondsRemaining = divmod(secondsPassed, NEXT_RESIN_TIME)
 
-            # update the resin
+            # update resin
             self.resinNum = lastResin + resinGain
 
-            if self.resinNum >= MAX_RESIN:
-                self.resinNum = MAX_RESIN
 
+    # save necessary data upon closing the application
     def on_closing(self):
         self.dataFile['lastResin'] = self.resinNum
         # "%Y-%m-%d %H:%M:%S"
         # ignore microseconds
         self.dataFile['lastTime'] = datetime.datetime.now().replace(microsecond=0)
+        self.dataFile['lastNextRemaining'] = self.nextResinTime
+        self.dataFile['lastFullRemaining'] = self.fullResinTime
         self.dataFile.close()
         self.master.destroy()
 
@@ -164,17 +166,22 @@ class Window(Frame):
         if newResin >= MAX_RESIN:
             newResin = MAX_RESIN
 
-        self.fullResinTime += NEXT_RESIN_TIME*resin
+        self.fullResinTime += NEXT_RESIN_TIME * resin
+        # if resin is at 0, take into account the current 'next resin time'
         if self.fullResinTime >= MAX_RESIN_TIME:
-            self.fullResinTime = MAX_RESIN_TIME
+            self.fullResinTime = (MAX_RESIN_TIME - NEXT_RESIN_TIME) + self.nextResinTime
 
         self.resinNum = newResin
         self.resinString.set(str(self.resinNum))
 
     def fullResinCountdown(self):
+        firstRun = True
         while True:
             currentResin = int(self.resinString.get())
             self.fullResinTime = (MAX_RESIN - currentResin) * NEXT_RESIN_TIME
+            if 'lastFullRemaining' in list(self.dataFile.keys()) and firstRun:
+                self.fullResinTime = self.dataFile['lastFullRemaining']
+            self.fullResinTime -= self.secondsRemaining
 
             if currentResin >= MAX_RESIN:
                 continue
@@ -199,13 +206,18 @@ class Window(Frame):
 
                 if (self.fullResinTime == 0) or (int(self.resinString.get()) == MAX_RESIN):
                     messagebox.showinfo('Resin Checker', 'Resin is full!')
+                    firstRun = False
                     break
 
                 self.fullResinTime -= 1
 
     def nextResinCountdown(self):
+        firstRun = True
         while True:
-            timeRemaining = NEXT_RESIN_TIME
+            timeRemaining = NEXT_RESIN_TIME - self.secondsRemaining
+            if 'lastNextRemaining' in list(self.dataFile.keys()) and firstRun:
+                timeRemaining = self.dataFile['lastNextRemaining'] - self.secondsRemaining
+            self.nextResinTime = timeRemaining
             currentResin = self.resinNum
 
             if currentResin >= MAX_RESIN:
@@ -236,9 +248,11 @@ class Window(Frame):
                 if (timeRemaining == 1):
                     self.resinNum += 1
                     self.resinString.set(str(self.resinNum))
+                    firstRun = False
                     break
 
                 timeRemaining -= 1
+                self.nextResinTime = timeRemaining
 
 
 if __name__ == '__main__':
