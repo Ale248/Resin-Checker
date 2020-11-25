@@ -8,7 +8,7 @@ import time
 import datetime
 
 # Time until next resin in seconds (8 minutes)
-NEXT_RESIN_TIME = 5
+NEXT_RESIN_TIME = 8*60
 
 # Max resin number (currently 160)
 MAX_RESIN = 160
@@ -83,7 +83,7 @@ class Window(Frame):
         self.nextResinLabel.grid(row=1, column=0, columnspan=6)
 
         # Next resin entry
-        self.nextResinEntry = Entry(master, textvariable=self.nextResinString, font=self.BIG_FONT)
+        self.nextResinEntry = Entry(master, textvariable=self.nextResinString, font=self.BIG_FONT, state=DISABLED)
         self.nextResinEntry.grid(row=2, column=0, columnspan=6)
 
         # 'Full resin' label
@@ -91,7 +91,7 @@ class Window(Frame):
         self.fullResinLabel.grid(row=3, column=0, columnspan=6)
 
         # Full resin entry
-        self.fullResinEntry = Entry(master, textvariable=self.fullResinString, font=self.BIG_FONT)
+        self.fullResinEntry = Entry(master, textvariable=self.fullResinString, font=self.BIG_FONT, state=DISABLED)
         self.fullResinEntry.grid(row=4, column=0, columnspan=6)
 
         # Start a thread for next resin countdown
@@ -259,7 +259,7 @@ class Window(Frame):
                 if self.resinNum == MAX_RESIN:
                     break
 
-                if (self.nextResinTime == 0):
+                if (self.nextResinTime == 1):
                     self.resinNum += 1
                     self.resinString.set(str(self.resinNum))
                     break
